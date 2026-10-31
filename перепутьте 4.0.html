@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Перепутье</title>
+<style>
+  /* ===== БАЗА ===== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: #0e0e12;
+    color: #f2efe6;
+    overflow-x: hidden;
+  }
+  .hidden { display: none !important; }
+
+  /* ===== ГЛАВНЫЙ ЭКРАН ===== */
+  .hero {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: radial-gradient(ellipse at 50% 40%, #2a2438 0%, #14121a 55%, #0a090d 100%);
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 900px; height: 900px;
+    background: radial-gradient(circle, rgba(200,170,255,0.10), transparent 60%);
+    top: 30%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: clamp(3rem, 13vw, 11rem);
+    letter-spacing: 0.18em;
+    font-weight: 400;
+    text-transform: uppercase;
+    line-height: 1;
+    background: linear-gradient(180deg, #fdfbf5 0%, #c9bfa8 70%, #8f8577 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    z-index: 2;
+    padding-left: 0.18em;
+    animation: fadeUp 1.6s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .hero .subtitle {
+    margin-top: 2rem;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: clamp(0.8rem, 1.4vw, 1rem);
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: #a89f8e;
+    z-index: 2;
+    animation: fadeUp 1.6s cubic-bezier(.2,.7,.2,1) 0.3s both;
+  }
+  .scroll-hint {
+    position: absolute;
+    bottom: 40px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center;
+    gap: 12px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: #7d7669;
+    z-index: 2;
+    animation: fadeUp 1.6s ease 0.8s both;
+  }
+  .scroll-hint .line {
+    width: 1px; height: 55px;
+    background: linear-gradient(to bottom, #7d7669, transparent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* ===== СЕКЦИИ ===== */
+  .sections { position: relative; }
+  .section {
+    min-height: 90vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 6rem 2rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1s ease, transform 1s cubic-bezier(.2,.7,.2,1);
+  }
+  .section.visible { opacity: 1; transform: translateY(0); }
+  .section-inner { max-width: 800px; text-align: center; }
+  .section .num {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.4em;
+    color: #6f685c;
+    margin-bottom: 1.5rem;
+  }
+  .section h2 {
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.5rem;
+    color: #ece7db;
+  }
+  .section p {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #a39b8c;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .section .autosave-note {
+    margin-top: 2.5rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    color: #6f685c;
+    font-style: italic;
+  }
+  .section-links {
+    list-style: none;
+    margin: 2.5rem auto 0;
+    max-width: 460px;
+    display: flex; flex-direction: column; gap: 0.9rem;
+  }
+  .section-links a {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.1rem 1.5rem;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    color: #ece7db;
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.02);
+    transition: border-color .35s ease, background .35s ease, color .35s ease;
+    cursor: pointer;
+  }
+  .section-links a span {
+    color: #8f8577;
+    transition: transform .35s cubic-bezier(.2,.7,.2,1), color .35s ease;
+  }
+  .section-links a:hover,
+  .section-links a:focus-visible {
+    border-color: rgba(201,191,168,0.55);
+    background: rgba(201,191,168,0.07);
+    color: #fdfbf5;
+    outline: none;
+  }
+  .section-links a:hover span,
+  .section-links a:focus-visible span {
+    color: #c9bfa8;
+    transform: translateX(6px);
+  }
+  .section:nth-child(even) { background: #121118; }
+
+  /* ===== АНИМАЦИИ ===== */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; transform: scaleY(0.7); transform-origin: top; }
+    50%      { opacity: 1;   transform: scaleY(1);   transform-origin: top; }
+  }
+
+  /* ===== ГАЛЕРЕЯ ===== */
+  .g-header {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem;
+    padding: 1.3rem 2rem;
+    background: rgba(14,14,18,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    flex-wrap: wrap;
+  }
+  .g-header .back {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: #a89f8e;
+    text-decoration: none;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transition: color 0.3s;
+    cursor: pointer;
+  }
+  .g-header .back:hover { color: #ece7db; }
+  .g-header h1 {
+    flex: 1;
+    text-align: center;
+    font-size: clamp(1.3rem, 3vw, 2rem);
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #fdfbf5, #c9bfa8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .g-header-actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .add-btn {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: transparent;
+    border: 1px solid rgba(200,170,255,0.4);
+    color: #ece7db;
+    padding: 0.7rem 1.4rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+  .add-btn:hover {
+    background: rgba(200,170,255,0.1);
+    border-color: rgba(200,170,255,0.8);
+  }
+  .add-btn.ghost {
+    border-color: rgba(255,255,255,0.15);
+    color: #a89f8e;
+  }
+  .add-btn.ghost:hover {
+    border-color: rgba(255,255,255,0.4);
+    color: #ece7db;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .categories {
+    display: flex;
+    gap: 1.8rem;
+    padding: 2.5rem 2rem 5rem;
+    overflow-x: auto;
+    min-height: calc(100vh - 80px);
+    align-items: flex-start;
+  }
+  .category-col {
+    flex: 0 0 320px;
+    max-width: 320px;
+    background: #121118;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+    padding: 1.5rem;
+  }
+  .cat-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
+  .cat-titles { min-width: 0; }
+  .cat-label {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.35em;
+    color: #6f685c;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .cat-name {
+    font-size: 1.4rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    margin-bottom: 1.4rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    color: #ece7db;
+  }
+  .cat-edit {
+    flex: 0 0 auto;
+    margin-top: 0.55rem;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #8f8577;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+  }
+  .cat-edit:hover, .cat-edit:focus-visible {
+    color: #fdfbf5;
+    border-color: rgba(200,170,255,0.55);
+    background: rgba(200,170,255,0.12);
+    outline: none;
+  }
+  .cards { display: flex; flex-direction: column; gap: 1rem; }
+  .card {
+    cursor: pointer;
+    background: #1a1920;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 3px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  .card:hover {
+    border-color: rgba(200,170,255,0.35);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+  .card img, .card .no-img {
+    width: 100%;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    display: block;
+    background: linear-gradient(135deg, #2a2438, #14121a);
+  }
+  .card .no-img {
+    display: flex; align-items: center; justify-content: center;
+    color: #4a4550;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .card-name {
+    padding: 0.9rem 1rem;
+    font-size: 1rem;
+    letter-spacing: 0.03em;
+    color: #ece7db;
+  }
+  .empty-hint {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.8rem;
+    color: #5d574d;
+    font-style: italic;
+    letter-spacing: 0.05em;
+    padding: 0.8rem 0;
+  }
+
+  /* ===== МОДАЛКИ ===== */
+  .modal {
+    position: fixed; inset: 0;
+    background: rgba(5,5,8,0.85);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    z-index: 100;
+    overflow-y: auto;
+  }
+  .modal.open { display: flex; }
+  .modal-inner {
+    background: #14131a;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    max-width: 760px;
+    width: 100%;
+    max-height: 92vh;
+    overflow-y: auto;
+    position: relative;
+    animation: modalIn 0.4s cubic-bezier(.2,.7,.2,1);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+  }
+  .modal-close {
+    position: absolute; top: 1rem; right: 1rem;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #ece7db;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    z-index: 5;
+  }
+  .modal-close:hover { background: rgba(200,100,100,0.3); }
+
+  .view-img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    object-position: center top;
+    background: linear-gradient(135deg, #2a2438, #14121a);
+    display: block;
+  }
+  .view-img.no-img {
+    display: flex; align-items: center; justify-content: center;
+    color: #4a4550;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+  }
+  .view-content { padding: 2rem 2.2rem 2.5rem; }
+  .view-name {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    margin-bottom: 1.5rem;
+    color: #fdfbf5;
+  }
+  .view-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.8rem;
+    padding-bottom: 1.8rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .meta-item .k {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.66rem;
+    letter-spacing: 0.3em;
+    color: #6f685c;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .meta-item .v { font-size: 1rem; color: #d8d2c4; }
+  .view-desc {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.9;
+    color: #a39b8c;
+    font-size: 0.98rem;
+    white-space: pre-wrap;
+  }
+  .view-actions { margin-top: 2rem; display: flex; justify-content: flex-end; }
+  .del-btn {
+    background: transparent;
+    border: 1px solid rgba(200,100,100,0.3);
+    color: #c97a7a;
+    padding: 0.6rem 1.2rem;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .del-btn:hover { background: rgba(200,100,100,0.15); border-color: #c97a7a; }
+
+  .form-body { padding: 2.5rem 2.2rem; }
+  .form-title {
+    font-size: 1.6rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    margin-bottom: 2rem;
+    color: #fdfbf5;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0 1.2rem;
+  }
+  .field { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.1rem; }
+  .field.full { grid-column: 1 / -1; }
+  .field label {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.25em;
+    color: #6f685c;
+    text-transform: uppercase;
+  }
+  .field input, .field textarea {
+    background: #1a1920;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #ece7db;
+    padding: 0.8rem 1rem;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    width: 100%;
+    border-radius: 2px;
+    transition: border-color 0.3s;
+  }
+  .field input:focus, .field textarea:focus { border-color: rgba(200,170,255,0.5); }
+  .field textarea { resize: vertical; min-height: 110px; }
+  .field input[type="file"] {
+    padding: 0.6rem;
+    font-size: 0.85rem;
+    color: #a39b8c;
+  }
+  .image-preview {
+    width: 120px; height: 150px;
+    object-fit: cover;
+    border-radius: 3px;
+    margin-top: 0.6rem;
+    display: none;
+  }
+  .image-preview.show { display: block; }
+
+  .form-actions {
+    display: flex; justify-content: flex-end; gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .btn-cancel, .btn-save {
+    padding: 0.7rem 1.6rem;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #a89f8e;
+  }
+  .btn-cancel:hover { border-color: rgba(255,255,255,0.4); color: #ece7db; }
+  .btn-save {
+    background: rgba(200,170,255,0.15);
+    border: 1px solid rgba(200,170,255,0.5);
+    color: #f0eaff;
+  }
+  .btn-save:hover { background: rgba(200,170,255,0.28); }
+
+  /* ===== ХРОНОЛОГИЯ / СЮЖЕТ ===== */
+  .tl-wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 5rem;
+  }
+  .tl-block {
+    background: #121118;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 4px;
+    padding: 1.6rem 1.6rem 1.3rem;
+    margin-bottom: 2rem;
+    scroll-margin-top: 100px;
+    transition: border-color .4s ease, box-shadow .4s ease;
+  }
+  .tl-block.tl-flash {
+    border-color: rgba(200,170,255,0.7);
+    box-shadow: 0 0 0 3px rgba(200,170,255,0.12);
+  }
+  .tl-block-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .tl-block-title {
+    font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: #ece7db;
+    word-break: break-word;
+  }
+  .tl-block-actions { display: flex; gap: 0.5rem; flex: 0 0 auto; }
+  .tl-scroll { overflow-x: auto; }
+  .tl-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 520px;
+  }
+  .tl-table th {
+    text-align: left;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.66rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #6f685c;
+    font-weight: 400;
+    padding: 0.55rem 0.8rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    white-space: nowrap;
+  }
+  .tl-table td {
+    padding: 0.9rem 0.8rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    vertical-align: top;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: #a39b8c;
+  }
+  .tl-table tr:last-child td { border-bottom: none; }
+  .tl-table td.tl-date {
+    white-space: nowrap;
+    color: #c9bfa8;
+    width: 1%;
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+  }
+  .tl-table td.tl-ev {
+    color: #ece7db;
+    width: 22%;
+    min-width: 140px;
+  }
+  .tl-table td.tl-row-actions {
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
+  }
+  .tl-table td.tl-empty { padding: 1rem 0.8rem; }
+  .row-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #8f8577;
+    font-size: 0.75rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .25s ease;
+    margin-left: 0.35rem;
+  }
+  .row-btn:hover, .row-btn:focus-visible {
+    color: #fdfbf5;
+    border-color: rgba(200,170,255,0.55);
+    background: rgba(200,170,255,0.12);
+    outline: none;
+  }
+  .row-btn.del:hover, .row-btn.del:focus-visible {
+    color: #f0b8b8;
+    border-color: rgba(200,100,100,0.6);
+    background: rgba(200,100,100,0.15);
+  }
+  .tl-block-foot { margin-top: 1.1rem; }
+  .tl-block-foot .add-btn { padding: 0.55rem 1.1rem; font-size: 0.78rem; }
+
+  .tl-unified {
+    margin-top: 3.5rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .tl-unified h2 {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    color: #ece7db;
+    margin-bottom: 1.2rem;
+  }
+  .tl-link {
+    color: #c9bfa8;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(201,191,168,0.35);
+    cursor: pointer;
+    transition: color .25s ease, border-color .25s ease;
+    white-space: nowrap;
+  }
+  .tl-link:hover, .tl-link:focus-visible {
+    color: #fdfbf5;
+    border-color: rgba(201,191,168,0.9);
+    outline: none;
+  }
+
+  /* ===== ИНДИКАТОР СОХРАНЕНИЯ ===== */
+  .save-badge {
+    position: fixed;
+    right: 20px; bottom: 20px;
+    max-width: calc(100vw - 40px);
+    background: rgba(20,19,26,0.96);
+    border: 1px solid rgba(200,170,255,0.45);
+    color: #ece7db;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    line-height: 1.5;
+    padding: 0.7rem 1.1rem;
+    border-radius: 3px;
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity .35s ease, transform .35s ease;
+    z-index: 200;
+  }
+  .save-badge.show { opacity: 1; transform: translateY(0); }
+  .save-badge.err { border-color: rgba(200,100,100,0.7); color: #f0b8b8; }
+
+  /* ===== МОБИЛЬНО ===== */
+  @media (max-width: 700px) {
+    .hero h1 { letter-spacing: 0.12em; padding-left: 0.12em; }
+    .hero .subtitle { letter-spacing: 0.3em; }
+    .section { padding: 4rem 1.5rem; }
+    .section-links a { padding: 1rem 1.1rem; font-size: 0.9rem; }
+    .g-header { padding: 1rem; gap: 0.6rem; }
+    .g-header h1 { order: 3; width: 100%; text-align: left; margin-top: 0.4rem; }
+    .g-header .back { order: 1; }
+    .g-header-actions { order: 2; margin-left: auto; }
+    .add-btn { order: 2; }
+    .categories { padding: 1.5rem 1rem 4rem; gap: 1rem; }
+    .category-col { flex: 0 0 260px; max-width: 260px; padding: 1.2rem; }
+    .form-body, .view-content { padding: 2rem 1.3rem; }
+    .tl-wrap { padding: 1.5rem 1rem 4rem; }
+    .tl-block { padding: 1.2rem 1rem 1rem; margin-bottom: 1.4rem; }
+    .tl-table { min-width: 460px; }
+    .save-badge { right: 12px; bottom: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================= ЛЕНДИНГ ============================= -->
+<div id="view-landing">
+  <header class="hero">
+    <h1>Перепутье</h1>
+    <div class="subtitle">Автор: Кую (Kuyu / 쿠유). Оригинальное название: 터닝 (Turning)</div>
+    <div class="scroll-hint">
+      <span>Листай вниз</span>
+      <div class="line"></div>
+    </div>
+  </header>
+
+  <main class="sections">
+    <section class="section">
+      <div class="section-inner">
+        <div class="num">01</div>
+        <h2>Навигация</h2>
+        <p>Разделы сайта. Нажми, чтобы перейти:</p>
+        <ul class="section-links">
+          <li><a href="#" data-goto="gallery">Галерея персонажей <span>→</span></a></li>
+          <li><a href="#" data-goto="places">Места <span>→</span></a></li>
+          <li><a href="#" data-goto="timeline">Хронология, сюжет <span>→</span></a></li>
+        </ul>
+        <p class="autosave-note">Все изменения сохраняются автоматически и записываются в адресную строку.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-inner">
+        <div class="num">02</div>
+        <h2>QoQ</h2>
+        <p>Вторая секция.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ============================= ГАЛЕРЕЯ ПЕРСОНАЖЕЙ ============================= -->
+<div id="view-gallery" class="hidden">
+  <header class="g-header">
+    <a href="#" class="back" data-goto="landing">← Назад</a>
+    <h1>Галерея персонажей</h1>
+    <button class="add-btn" id="openAdd">+ Добавить персонажа</button>
+  </header>
+
+  <main class="categories" id="categories"></main>
+
+  <!-- МОДАЛКА ПРОСМОТРА -->
+  <div class="modal" id="viewModal">
+    <div class="modal-inner">
+      <button class="modal-close" data-close="viewModal">✕</button>
+      <div id="viewBody"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА ДОБАВЛЕНИЯ -->
+  <div class="modal" id="addModal">
+    <div class="modal-inner">
+      <button class="modal-close" data-close="addModal">✕</button>
+      <form class="form-body" id="addForm">
+        <h2 class="form-title">Новый персонаж</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label>Имя *</label>
+            <input type="text" name="name" required>
+          </div>
+          <div class="field">
+            <label>Возраст</label>
+            <input type="text" name="age">
+          </div>
+          <div class="field">
+            <label>Статус</label>
+            <input type="text" name="status">
+          </div>
+          <div class="field">
+            <label>Первое появление</label>
+            <input type="text" name="firstAppearance" placeholder="Глава ...">
+          </div>
+          <div class="field full">
+            <label>Категория *</label>
+            <input type="text" name="category" list="categoryList" required placeholder="Например: Кавалерия">
+            <datalist id="categoryList"></datalist>
+          </div>
+          <div class="field full">
+            <label>Изображение</label>
+            <input type="file" accept="image/*" id="imageInput">
+            <img class="image-preview" id="imagePreview" alt="">
+          </div>
+          <div class="field full">
+            <label>Описание (внешность, появление в новелле)</label>
+            <textarea name="description" rows="4"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" data-close="addModal">Отмена</button>
+          <button type="submit" class="btn-save">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= МЕСТА ============================= -->
+<div id="view-places" class="hidden">
+  <header class="g-header">
+    <a href="#" class="back" data-goto="landing">← Назад</a>
+    <h1>Места</h1>
+    <div class="g-header-actions">
+      <button class="add-btn ghost" id="openAddBlock">+ Блок</button>
+      <button class="add-btn" id="openAddPlace">+ Добавить место</button>
+    </div>
+  </header>
+
+  <main class="categories" id="placeCategories"></main>
+
+  <!-- МОДАЛКА ПРОСМОТРА -->
+  <div class="modal" id="placeViewModal">
+    <div class="modal-inner">
+      <button class="modal-close" data-close="placeViewModal">✕</button>
+      <div id="placeViewBody"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА ДОБАВЛЕНИЯ -->
+  <div class="modal" id="placeAddModal">
+    <div class="modal-inner">
+      <button class="modal-close" data-close="placeAddModal">✕</button>
+      <form class="form-body" id="placeAddForm">
+        <h2 class="form-title">Новое место</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label>Название *</label>
+            <input type="text" name="name" required>
+          </div>
+          <div class="field">
+            <label>Тип</label>
+            <input type="text" name="type" placeholder="Город, замок, лес...">
+          </div>
+          <div class="field">
+            <label>Правитель</label>
+            <input type="text" name="ruler">
+          </div>
+          <div class="field">
+            <label>Население</label>
+            <input type="text" name="population">
+          </div>
+          <div class="field full">
+            <label>Блок *</label>
+            <input type="text" name="category" list="placeBlockList" required placeholder="Например: Империя Орр">
+            <datalist id="placeBlockList"></datalist>
+          </div>
+          <div class="field full">
+            <label>Изображение</label>
+            <input type="file" accept="image/*" id="placeImageInput">
+            <img class="image-preview" id="placeImagePreview" alt="">
+          </div>
+          <div class="field full">
+            <label>Описание</label>
+            <textarea name="description" rows="4"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" data-close="placeAddModal">Отмена</button>
+          <button type="submit" class="btn-save">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= ХРОНОЛОГИЯ, СЮЖЕТ ============================= -->
+<div id="view-timeline" class="hidden">
+  <header class="g-header">
+    <a href="#" class="back" data-goto="landing">← Назад</a>
+    <h1>Хронология, сюжет</h1>
+    <div class="g-header-actions">
+      <button class="add-btn" id="openAddTimelineBlock">+ Блок</button>
+    </div>
+  </header>
+
+  <main class="tl-wrap">
+    <div id="timelineBlocks"></div>
+
+    <section class="tl-unified">
+      <div class="cat-label">Общая линия</div>
+      <h2>Единая хронология</h2>
+      <div class="tl-scroll">
+        <table class="tl-table">
+          <thead>
+            <tr>
+              <th>Время</th>
+              <th>Событие</th>
+              <th>Описание</th>
+              <th>Блок</th>
+            </tr>
+          </thead>
+          <tbody id="unifiedTimelineBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- МОДАЛКА СОБЫТИЯ -->
+  <div class="modal" id="eventModal">
+    <div class="modal-inner" style="max-width: 560px;">
+      <button class="modal-close" data-close="eventModal">✕</button>
+      <form class="form-body" id="eventForm">
+        <h2 class="form-title" id="eventModalTitle">Новое событие</h2>
+        <input type="hidden" id="eventBlockId">
+        <input type="hidden" id="eventId">
+        <div class="form-grid">
+          <div class="field">
+            <label>Время / дата</label>
+            <input type="text" id="eventTime" placeholder="Глава 1, Год 312...">
+          </div>
+          <div class="field">
+            <label>Событие *</label>
+            <input type="text" id="eventTitle" required>
+          </div>
+          <div class="field full">
+            <label>Описание</label>
+            <textarea id="eventDesc" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" data-close="eventModal">Отмена</button>
+          <button type="submit" class="btn-save">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= ОБЩАЯ МОДАЛКА НАЗВАНИЯ ============================= -->
+<div class="modal" id="nameModal">
+  <div class="modal-inner" style="max-width: 440px;">
+    <button class="modal-close" data-close="nameModal">✕</button>
+    <form class="form-body" id="nameForm">
+      <h2 class="form-title" id="nameModalTitle">Название</h2>
+      <div class="field full">
+        <label id="nameModalLabel">Название</label>
+        <input type="text" id="nameModalInput" required>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" data-close="nameModal">Отмена</button>
+        <button type="submit" class="btn-save">Сохранить</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ИНДИКАТОР СОХРАНЕНИЯ -->
+<div class="save-badge" id="saveBadge">Сохранено</div>
+
+<script>
+  /* =============================================================
+     1) РОУТИНГ МЕЖДУ "СТРАНИЦАМИ"
+     Формат ссылки: #gallery&d=<данные>
+     Данные хранятся прямо в ссылке (base64url), поэтому
+     изменения не сбрасываются, а ссылкой можно поделиться.
+     ============================================================= */
+  const viewLanding  = document.getElementById('view-landing');
+  const viewGallery  = document.getElementById('view-gallery');
+  const viewPlaces   = document.getElementById('view-places');
+  const viewTimeline = document.getElementById('view-timeline');
+
+  const VIEWS = {
+    landing:  viewLanding,
+    gallery:  viewGallery,
+    places:   viewPlaces,
+    timeline: viewTimeline
+  };
+
+  let currentView = 'landing';
+
+  function showView(name) {
+    if (!VIEWS[name]) name = 'landing';
+    currentView = name;
+    Object.keys(VIEWS).forEach(k => {
+      VIEWS[k].classList.toggle('hidden', k !== name);
+    });
+    window.scrollTo(0, 0);
+  }
+
+  function parseHash() {
+    const raw = location.hash.replace(/^#/, '');
+    if (!raw) return { view: 'landing', data: null };
+    const parts = raw.split('&');
+    let view = parts[0] || 'landing';
+    let data = null;
+    for (let i = 1; i < parts.length; i++) {
+      if (parts[i].indexOf('d=') === 0) data = parts[i].slice(2);
+    }
+    return { view: VIEWS[view] ? view : 'landing', data };
+  }
+
+  function buildHash(view) {
+    const d = encodeState();
+    return '#' + view + (d ? '&d=' + d : '');
+  }
+
+  function navigate(name) {
+    showView(name);
+    const hash = buildHash(name);
+    try {
+      history.pushState({ view: name }, '', hash);
+    } catch (e) {
+      location.hash = hash;
+    }
+  }
+
+  // Реакция на «назад/вперёд» и на вставку ссылки в адресную строку
+  function handleUrlChange() {
+    const h = parseHash();
+    if (h.data) {
+      const cur = encodeState();
+      if (h.data !== cur) {
+        try {
+          const obj = JSON.parse(b64decode(h.data));
+          applyState(obj);
+          persist({ noUrl: true, silent: true });
+          render();
+          renderPlaces();
+          renderTimeline();
+        } catch (e) { /* повреждённая ссылка — игнорируем */ }
+      }
+    }
+    if (h.view !== currentView) showView(h.view);
+  }
+
+  window.addEventListener('popstate', handleUrlChange);
+  window.addEventListener('hashchange', handleUrlChange);
+
+  document.querySelectorAll('[data-goto]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      navigate(el.dataset.goto);
+    });
+  });
+
+  /* =============================================================
+     2) ПОЯВЛЕНИЕ СЕКЦИЙ ПРИ ПРОКРУТКЕ (лендинг)
+     ============================================================= */
+  const sections = document.querySelectorAll('.section');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.25 });
+  sections.forEach(sec => observer.observe(sec));
+
+  /* =============================================================
+     3) ОБЩИЕ ХЕЛПЕРЫ
+     ============================================================= */
+  function loadJSON(key, fallback) {
+    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch (e) { return fallback; }
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function uid() {
+    return (crypto.randomUUID && crypto.randomUUID()) || String(Date.now() + Math.random());
+  }
+
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => closeModal(btn.dataset.close));
+  });
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal.open').forEach(m => closeModal(m.id));
+    }
+  });
+
+  function compressImage(file, maxSide, quality) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = ev => {
+        const img = new Image();
+        img.onerror = reject;
+        img.onload = () => {
+          const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width  = Math.round(img.width  * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /* ---------- КОДИРОВАНИЕ СОСТОЯНИЯ В ССЫЛКУ ---------- */
+
+  // Максимальная длина данных в ссылке (защита от «непрогружаемых» ссылок)
+  const URL_DATA_LIMIT = 1200000;
+  let urlTooLong = false;
+
+  function b64encode(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function b64decode(s) {
+    s = String(s).replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    const bin = atob(s);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  function encodeState() {
+    try {
+      const payload = {
+        v: 1,
+        characters: characters,
+        categories: categories,
+        places: places,
+        placeBlocks: placeBlocks,
+        timelineBlocks: timelineBlocks
+      };
+      const data = b64encode(JSON.stringify(payload));
+      if (data.length > URL_DATA_LIMIT) {
+        urlTooLong = true;
+        return '';
+      }
+      urlTooLong = false;
+      return data;
+    } catch (e) {
+      urlTooLong = true;
+      return '';
+    }
+  }
+
+  function applyState(obj) {
+    if (!obj || typeof obj !== 'object') return;
+    if (Array.isArray(obj.characters))     characters     = obj.characters;
+    if (Array.isArray(obj.categories))     categories     = obj.categories;
+    if (Array.isArray(obj.places))         places         = obj.places;
+    if (Array.isArray(obj.placeBlocks))    placeBlocks    = obj.placeBlocks;
+    if (Array.isArray(obj.timelineBlocks)) timelineBlocks = obj.timelineBlocks;
+  }
+
+  function syncUrl() {
+    const hash = buildHash(currentView);
+    if (location.hash === hash) return;
+    try {
+      history.replaceState({ view: currentView }, '', hash);
+    } catch (e) {
+      location.hash = hash;
+    }
+  }
+
+  let badgeTimer = null;
+  function flashSaved(ok) {
+    const badge = document.getElementById('saveBadge');
+    if (!badge) return;
+    badge.classList.toggle('err', ok === false);
+    badge.textContent = ok === false
+      ? 'Не сохранено: хранилище переполнено'
+      : (urlTooLong
+          ? 'Сохранено локально (слишком много данных для ссылки)'
+          : 'Сохранено ✓');
+    badge.classList.add('show');
+    clearTimeout(badgeTimer);
+    badgeTimer = setTimeout(() => badge.classList.remove('show'), 2200);
+  }
+
+  // Единая точка сохранения: localStorage + ссылка
+  function persist(opts) {
+    opts = opts || {};
+    let ok = true;
+    try {
+      localStorage.setItem(STORAGE_KEY,     JSON.stringify(characters));
+      localStorage.setItem(CAT_KEY,         JSON.stringify(categories));
+      localStorage.setItem(PLACES_KEY,      JSON.stringify(places));
+      localStorage.setItem(BLOCKS_KEY,      JSON.stringify(placeBlocks));
+      localStorage.setItem(TL_KEY,          JSON.stringify(timelineBlocks));
+    } catch (e) {
+      ok = false;
+    }
+    if (!opts.noUrl) syncUrl();
+    if (!opts.silent) flashSaved(ok);
+    return ok;
+  }
+
+  /* =============================================================
+     4) МОДАЛКА ВВОДА НАЗВАНИЯ
+     ============================================================= */
+  let nameModalHandler = null;
+
+  function openNameModal({ title, label, value, onSave }) {
+    document.getElementById('nameModalTitle').textContent = title;
+    document.getElementById('nameModalLabel').textContent = label;
+    const input = document.getElementById('nameModalInput');
+    input.value = value || '';
+    nameModalHandler = onSave;
+    openModal('nameModal');
+    setTimeout(() => { input.focus(); input.select(); }, 60);
+  }
+
+  document.getElementById('nameForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const val = document.getElementById('nameModalInput').value.trim();
+    if (!val || !nameModalHandler) return;
+    const cb = nameModalHandler;
+    nameModalHandler = null;
+    closeModal('nameModal');
+    cb(val);
+  });
+
+  /* =============================================================
+     5) ГАЛЕРЕЯ ПЕРСОНАЖЕЙ
+     ============================================================= */
+  const STORAGE_KEY = 'pereputie_characters_v1';
+  const CAT_KEY     = 'pereputie_categories_v1';
+  const DEFAULT_CATEGORIES = ['Кавалерия', 'Имперская семья', 'Магия', 'Знать'];
+
+  let characters   = loadJSON(STORAGE_KEY, []);
+  let categories   = loadJSON(CAT_KEY, DEFAULT_CATEGORIES.slice());
+  let currentImage = null;
+
+  // Обратная совместимость с прежними вызовами
+  function saveAll() { persist(); }
+
+  function getAllCategories() {
+    const set = new Set(categories);
+    characters.forEach(c => set.add(c.category));
+    return Array.from(set).filter(Boolean);
+  }
+
+  function renameCategory(oldName, newName) {
+    newName = (newName || '').trim();
+    if (!newName || newName === oldName) return;
+    characters.forEach(c => { if (c.category === oldName) c.category = newName; });
+    const idx = categories.indexOf(oldName);
+    if (idx !== -1) categories[idx] = newName;
+    if (!categories.includes(newName)) categories.push(newName);
+    categories = Array.from(new Set(categories.filter(Boolean)));
+    persist();
+    render();
+  }
+
+  function render() {
+    const container = document.getElementById('categories');
+    const cats = getAllCategories();
+
+    if (cats.length === 0) {
+      container.innerHTML = '<p class="empty-hint">Пока нет категорий. Нажми «Добавить персонажа».</p>';
+    } else {
+      container.innerHTML = cats.map(cat => {
+        const list = characters.filter(c => c.category === cat);
+        const cardsHtml = list.length
+          ? list.map(c => `
+              <div class="card" data-id="${c.id}">
+                ${c.image
+                  ? `<img src="${c.image}" alt="${escapeHtml(c.name)}">`
+                  : `<div class="no-img">нет фото</div>`}
+                <div class="card-name">${escapeHtml(c.name)}</div>
+              </div>
+            `).join('')
+          : '<p class="empty-hint">Нет персонажей</p>';
+
+        return `
+          <div class="category-col">
+            <div class="cat-head">
+              <div class="cat-titles">
+                <div class="cat-label">Категория</div>
+                <div class="cat-name">${escapeHtml(cat)}</div>
+              </div>
+              <button class="cat-edit" data-cat="${escapeHtml(cat)}" title="Переименовать категорию" aria-label="Переименовать категорию">✎</button>
+            </div>
+            <div class="cards">${cardsHtml}</div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.card').forEach(el => {
+        el.addEventListener('click', () => openView(el.dataset.id));
+      });
+
+      container.querySelectorAll('.cat-edit').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const oldName = btn.dataset.cat;
+          openNameModal({
+            title: 'Переименовать категорию',
+            label: 'Название категории',
+            value: oldName,
+            onSave: newName => renameCategory(oldName, newName)
+          });
+        });
+      });
+    }
+
+    document.getElementById('categoryList').innerHTML =
+      getAllCategories().map(c => `<option value="${escapeHtml(c)}">`).join('');
+  }
+
+  function openView(id) {
+    const c = characters.find(x => x.id === id);
+    if (!c) return;
+
+    const body = document.getElementById('viewBody');
+    body.innerHTML = `
+      ${c.image
+        ? `<img class="view-img" src="${c.image}" alt="${escapeHtml(c.name)}">`
+        : `<div class="view-img no-img">Изображение отсутствует</div>`}
+      <div class="view-content">
+        <h2 class="view-name">${escapeHtml(c.name)}</h2>
+        <div class="view-meta">
+          ${c.age ? `<div class="meta-item"><div class="k">Возраст</div><div class="v">${escapeHtml(c.age)}</div></div>` : ''}
+          ${c.status ? `<div class="meta-item"><div class="k">Статус</div><div class="v">${escapeHtml(c.status)}</div></div>` : ''}
+          ${c.firstAppearance ? `<div class="meta-item"><div class="k">Первое появление</div><div class="v">${escapeHtml(c.firstAppearance)}</div></div>` : ''}
+          <div class="meta-item"><div class="k">Категория</div><div class="v">${escapeHtml(c.category)}</div></div>
+        </div>
+        ${c.description ? `<p class="view-desc">${escapeHtml(c.description)}</p>` : ''}
+        <div class="view-actions">
+          <button class="del-btn" data-del="${c.id}">Удалить персонажа</button>
+        </div>
+      </div>
+    `;
+
+    body.querySelector('[data-del]').addEventListener('click', () => {
+      if (confirm(`Удалить «${c.name}»?`)) {
+        characters = characters.filter(x => x.id !== c.id);
+        persist();
+        closeModal('viewModal');
+        render();
+      }
+    });
+
+    openModal('viewModal');
+  }
+
+  document.getElementById('openAdd').addEventListener('click', () => {
+    document.getElementById('addForm').reset();
+    currentImage = null;
+    const prev = document.getElementById('imagePreview');
+    prev.classList.remove('show');
+    prev.src = '';
+    render();
+    openModal('addModal');
+  });
+
+  document.getElementById('imageInput').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    currentImage = await compressImage(file, 700, 0.82);
+    const prev = document.getElementById('imagePreview');
+    prev.src = currentImage;
+    prev.classList.add('show');
+  });
+
+  document.getElementById('addForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const name = (fd.get('name') || '').trim();
+    const category = (fd.get('category') || '').trim();
+    if (!name || !category) return;
+
+    const newChar = {
+      id: uid(),
+      name,
+      age:             (fd.get('age') || '').trim(),
+      status:          (fd.get('status') || '').trim(),
+      firstAppearance: (fd.get('firstAppearance') || '').trim(),
+      category,
+      image: currentImage,
+      description: (fd.get('description') || '').trim()
+    };
+
+    if (!categories.includes(category)) categories.push(category);
+    characters.push(newChar);
+    persist();
+    closeModal('addModal');
+    render();
+  });
+
+  /* =============================================================
+     6) МЕСТА
+     ============================================================= */
+  const PLACES_KEY  = 'pereputie_places_v1';
+  const BLOCKS_KEY  = 'pereputie_place_blocks_v1';
+  const DEFAULT_BLOCKS = ['Империя Орр', 'Королевство Неларн'];
+
+  let places            = loadJSON(PLACES_KEY, []);
+  let placeBlocks       = loadJSON(BLOCKS_KEY, DEFAULT_BLOCKS.slice());
+  let currentPlaceImage = null;
+
+  function savePlaces() { persist(); }
+
+  function getAllBlocks() {
+    const set = new Set(placeBlocks);
+    places.forEach(p => set.add(p.category));
+    return Array.from(set).filter(Boolean);
+  }
+
+  function renameBlock(oldName, newName) {
+    newName = (newName || '').trim();
+    if (!newName || newName === oldName) return;
+    places.forEach(p => { if (p.category === oldName) p.category = newName; });
+    const idx = placeBlocks.indexOf(oldName);
+    if (idx !== -1) placeBlocks[idx] = newName;
+    if (!placeBlocks.includes(newName)) placeBlocks.push(newName);
+    placeBlocks = Array.from(new Set(placeBlocks.filter(Boolean)));
+    persist();
+    renderPlaces();
+  }
+
+  function renderPlaces() {
+    const container = document.getElementById('placeCategories');
+    const blocks = getAllBlocks();
+
+    if (blocks.length === 0) {
+      container.innerHTML = '<p class="empty-hint">Пока нет блоков. Нажми «+ Блок», чтобы создать.</p>';
+    } else {
+      container.innerHTML = blocks.map(block => {
+        const list = places.filter(p => p.category === block);
+        const cardsHtml = list.length
+          ? list.map(p => `
+              <div class="card" data-id="${p.id}">
+                ${p.image
+                  ? `<img src="${p.image}" alt="${escapeHtml(p.name)}">`
+                  : `<div class="no-img">нет фото</div>`}
+                <div class="card-name">${escapeHtml(p.name)}</div>
+              </div>
+            `).join('')
+          : '<p class="empty-hint">Нет мест</p>';
+
+        return `
+          <div class="category-col">
+            <div class="cat-head">
+              <div class="cat-titles">
+                <div class="cat-label">Блок</div>
+                <div class="cat-name">${escapeHtml(block)}</div>
+              </div>
+              <button class="cat-edit" data-block="${escapeHtml(block)}" title="Переименовать блок" aria-label="Переименовать блок">✎</button>
+            </div>
+            <div class="cards">${cardsHtml}</div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.card').forEach(el => {
+        el.addEventListener('click', () => openPlaceView(el.dataset.id));
+      });
+
+      container.querySelectorAll('.cat-edit').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const oldName = btn.dataset.block;
+          openNameModal({
+            title: 'Переименовать блок',
+            label: 'Название блока',
+            value: oldName,
+            onSave: newName => renameBlock(oldName, newName)
+          });
+        });
+      });
+    }
+
+    document.getElementById('placeBlockList').innerHTML =
+      getAllBlocks().map(b => `<option value="${escapeHtml(b)}">`).join('');
+  }
+
+  function openPlaceView(id) {
+    const p = places.find(x => x.id === id);
+    if (!p) return;
+
+    const body = document.getElementById('placeViewBody');
+    body.innerHTML = `
+      ${p.image
+        ? `<img class="view-img" src="${p.image}" alt="${escapeHtml(p.name)}">`
+        : `<div class="view-img no-img">Изображение отсутствует</div>`}
+      <div class="view-content">
+        <h2 class="view-name">${escapeHtml(p.name)}</h2>
+        <div class="view-meta">
+          ${p.type ? `<div class="meta-item"><div class="k">Тип</div><div class="v">${escapeHtml(p.type)}</div></div>` : ''}
+          ${p.ruler ? `<div class="meta-item"><div class="k">Правитель</div><div class="v">${escapeHtml(p.ruler)}</div></div>` : ''}
+          ${p.population ? `<div class="meta-item"><div class="k">Население</div><div class="v">${escapeHtml(p.population)}</div></div>` : ''}
+          <div class="meta-item"><div class="k">Блок</div><div class="v">${escapeHtml(p.category)}</div></div>
+        </div>
+        ${p.description ? `<p class="view-desc">${escapeHtml(p.description)}</p>` : ''}
+        <div class="view-actions">
+          <button class="del-btn" data-del="${p.id}">Удалить место</button>
+        </div>
+      </div>
+    `;
+
+    body.querySelector('[data-del]').addEventListener('click', () => {
+      if (confirm(`Удалить «${p.name}»?`)) {
+        places = places.filter(x => x.id !== p.id);
+        persist();
+        closeModal('placeViewModal');
+        renderPlaces();
+      }
+    });
+
+    openModal('placeViewModal');
+  }
+
+  document.getElementById('openAddBlock').addEventListener('click', () => {
+    openNameModal({
+      title: 'Новый блок',
+      label: 'Название блока',
+      value: '',
+      onSave: name => {
+        if (!placeBlocks.includes(name)) placeBlocks.push(name);
+        persist();
+        renderPlaces();
+      }
+    });
+  });
+
+  document.getElementById('openAddPlace').addEventListener('click', () => {
+    document.getElementById('placeAddForm').reset();
+    currentPlaceImage = null;
+    const prev = document.getElementById('placeImagePreview');
+    prev.classList.remove('show');
+    prev.src = '';
+    renderPlaces();
+    openModal('placeAddModal');
+  });
+
+  document.getElementById('placeImageInput').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    currentPlaceImage = await compressImage(file, 700, 0.82);
+    const prev = document.getElementById('placeImagePreview');
+    prev.src = currentPlaceImage;
+    prev.classList.add('show');
+  });
+
+  document.getElementById('placeAddForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const name = (fd.get('name') || '').trim();
+    const category = (fd.get('category') || '').trim();
+    if (!name || !category) return;
+
+    const newPlace = {
+      id: uid(),
+      name,
+      type:       (fd.get('type') || '').trim(),
+      ruler:      (fd.get('ruler') || '').trim(),
+      population: (fd.get('population') || '').trim(),
+      category,
+      image: currentPlaceImage,
+      description: (fd.get('description') || '').trim()
+    };
+
+    if (!placeBlocks.includes(category)) placeBlocks.push(category);
+    places.push(newPlace);
+    persist();
+    closeModal('placeAddModal');
+    renderPlaces();
+  });
+
+  /* =============================================================
+     7) ХРОНОЛОГИЯ / СЮЖЕТ
+     ============================================================= */
+  const TL_KEY = 'pereputie_timeline_v1';
+
+  let timelineBlocks = loadJSON(TL_KEY, [
+    { id: 'tl-arc-1', name: 'Арка начала', events: [] }
+  ]);
+
+  function saveTimeline() { persist(); }
+
+  function renderTimeline() {
+    const container   = document.getElementById('timelineBlocks');
+    const unifiedBody = document.getElementById('unifiedTimelineBody');
+
+    /* --- блоки с таблицами --- */
+    if (timelineBlocks.length === 0) {
+      container.innerHTML = '<p class="empty-hint">Пока нет блоков. Нажми «+ Блок», чтобы создать.</p>';
+    } else {
+      container.innerHTML = timelineBlocks.map(b => {
+        const rows = b.events.length
+          ? b.events.map(ev => `
+              <tr>
+                <td class="tl-date">${escapeHtml(ev.time)}</td>
+                <td class="tl-ev">${escapeHtml(ev.title)}</td>
+                <td>${escapeHtml(ev.description)}</td>
+                <td class="tl-row-actions">
+                  <button class="row-btn" data-edit-block="${b.id}" data-edit-event="${ev.id}" title="Редактировать" aria-label="Редактировать">✎</button>
+                  <button class="row-btn del" data-del-block="${b.id}" data-del-event="${ev.id}" title="Удалить" aria-label="Удалить">✕</button>
+                </td>
+              </tr>
+            `).join('')
+          : `<tr><td class="tl-empty" colspan="4"><span class="empty-hint">Событий пока нет.</span></td></tr>`;
+
+        return `
+          <section class="tl-block" id="tl-block-${b.id}">
+            <div class="tl-block-head">
+              <div class="cat-titles">
+                <div class="cat-label">Блок</div>
+                <h2 class="tl-block-title">${escapeHtml(b.name)}</h2>
+              </div>
+              <div class="tl-block-actions">
+                <button class="cat-edit" data-rename="${b.id}" title="Переименовать блок" aria-label="Переименовать блок">✎</button>
+                <button class="cat-edit" data-remove="${b.id}" title="Удалить блок" aria-label="Удалить блок">🗑</button>
+              </div>
+            </div>
+            <div class="tl-scroll">
+              <table class="tl-table">
+                <thead>
+                  <tr>
+                    <th>Время</th>
+                    <th>Событие</th>
+                    <th>Описание</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+            <div class="tl-block-foot">
+              <button class="add-btn" data-add-event="${b.id}">+ Добавить событие</button>
+            </div>
+          </section>
+        `;
+      }).join('');
+
+      // кнопки внутри блоков
+      container.querySelectorAll('[data-add-event]').forEach(btn => {
+        btn.addEventListener('click', () => openEventModal(btn.dataset.addEvent));
+      });
+
+      container.querySelectorAll('[data-rename]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.rename;
+          const block = timelineBlocks.find(b => b.id === id);
+          if (!block) return;
+          openNameModal({
+            title: 'Переименовать блок',
+            label: 'Название блока',
+            value: block.name,
+            onSave: newName => {
+              block.name = newName;
+              persist();
+              renderTimeline();
+            }
+          });
+        });
+      });
+
+      container.querySelectorAll('[data-remove]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.remove;
+          const block = timelineBlocks.find(b => b.id === id);
+          if (!block) return;
+          if (confirm(`Удалить блок «${block.name}» со всеми событиями?`)) {
+            timelineBlocks = timelineBlocks.filter(b => b.id !== id);
+            persist();
+            renderTimeline();
+          }
+        });
+      });
+
+      container.querySelectorAll('[data-edit-event]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          openEventModal(btn.dataset.editBlock, btn.dataset.editEvent);
+        });
+      });
+
+      container.querySelectorAll('[data-del-event]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const block = timelineBlocks.find(b => b.id === btn.dataset.delBlock);
+          if (!block) return;
+          const ev = block.events.find(e => e.id === btn.dataset.delEvent);
+          if (!ev) return;
+          if (confirm(`Удалить событие «${ev.title}»?`)) {
+            block.events = block.events.filter(e => e.id !== ev.id);
+            persist();
+            renderTimeline();
+          }
+        });
+      });
+    }
+
+    /* --- единая хронологическая линия внизу --- */
+    const all = [];
+    timelineBlocks.forEach(b => b.events.forEach(ev => all.push({ block: b, ev })));
+
+    if (all.length === 0) {
+      unifiedBody.innerHTML = '<tr><td class="tl-empty" colspan="4"><span class="empty-hint">Хронология пуста. Добавь события в блоки выше.</span></td></tr>';
+    } else {
+      unifiedBody.innerHTML = all.map(({ block, ev }) => `
+        <tr>
+          <td class="tl-date">${escapeHtml(ev.time)}</td>
+          <td class="tl-ev">${escapeHtml(ev.title)}</td>
+          <td>${escapeHtml(ev.description)}</td>
+          <td class="tl-date"><a href="#" class="tl-link" data-jump="${block.id}">${escapeHtml(block.name)}</a></td>
+        </tr>
+      `).join('');
+
+      unifiedBody.querySelectorAll('[data-jump]').forEach(link => {
+        link.addEventListener('click', e => {
+          e.preventDefault();
+          jumpToTimelineBlock(link.dataset.jump);
+        });
+      });
+    }
+  }
+
+  function jumpToTimelineBlock(id) {
+    const el = document.getElementById('tl-block-' + id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.classList.add('tl-flash');
+    setTimeout(() => el.classList.remove('tl-flash'), 1400);
+  }
+
+  /* --- модалка события --- */
+  function openEventModal(blockId, eventId) {
+    const block = timelineBlocks.find(b => b.id === blockId);
+    if (!block) return;
+
+    const ev = eventId ? block.events.find(e => e.id === eventId) : null;
+
+    document.getElementById('eventBlockId').value = blockId;
+    document.getElementById('eventId').value = ev ? ev.id : '';
+    document.getElementById('eventModalTitle').textContent =
+      (ev ? 'Редактировать событие' : 'Новое событие') + ' — ' + block.name;
+    document.getElementById('eventTime').value  = ev ? (ev.time || '') : '';
+    document.getElementById('eventTitle').value = ev ? ev.title : '';
+    document.getElementById('eventDesc').value  = ev ? (ev.description || '') : '';
+
+    openModal('eventModal');
+    setTimeout(() => document.getElementById('eventTitle').focus(), 60);
+  }
+
+  document.getElementById('eventForm').addEventListener('submit', e => {
+    e.preventDefault();
+
+    const blockId = document.getElementById('eventBlockId').value;
+    const eventId = document.getElementById('eventId').value;
+    const block   = timelineBlocks.find(b => b.id === blockId);
+    if (!block) return;
+
+    const time        = document.getElementById('eventTime').value.trim();
+    const title       = document.getElementById('eventTitle').value.trim();
+    const description = document.getElementById('eventDesc').value.trim();
+    if (!title) return;
+
+    if (eventId) {
+      const ev = block.events.find(x => x.id === eventId);
+      if (ev) { ev.time = time; ev.title = title; ev.description = description; }
+    } else {
+      block.events.push({ id: uid(), time, title, description });
+    }
+
+    persist();
+    closeModal('eventModal');
+    renderTimeline();
+  });
+
+  /* --- добавление нового блока --- */
+  document.getElementById('openAddTimelineBlock').addEventListener('click', () => {
+    openNameModal({
+      title: 'Новый блок',
+      label: 'Название блока (например: Арка начала)',
+      value: '',
+      onSave: name => {
+        timelineBlocks.push({ id: uid(), name, events: [] });
+        persist();
+        renderTimeline();
+      }
+    });
+  });
+
+  /* =============================================================
+     8) СТАРТ
+     Сначала читаем данные из ссылки (если она есть),
+     иначе — из localStorage. Затем всё отрисовываем.
+     ============================================================= */
+  (function init() {
+    const h = parseHash();
+
+    if (h.data) {
+      try {
+        const obj = JSON.parse(b64decode(h.data));
+        applyState(obj);
+        // кэшируем полученные из ссылки данные локально
+        persist({ noUrl: true, silent: true });
+      } catch (e) {
+        console.warn('Не удалось прочитать данные из ссылки:', e);
+      }
+    }
+
+    render();
+    renderPlaces();
+    renderTimeline();
+
+    showView(h.view);
+    syncUrl();
+  })();
+</script>
+
+</body>
+</html>
